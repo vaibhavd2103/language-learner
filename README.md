@@ -7,7 +7,7 @@ Record yourself speaking German, get a German reply (spoken aloud), and ask for 
 | Job | Tool | Cost |
 |---|---|---|
 | Speech → text | Groq `whisper-large-v3-turbo` | free tier |
-| Conversation + corrections | Groq `llama-3.3-70b-versatile` | free tier |
+| Conversation + corrections | Groq `openai/gpt-oss-120b` | free tier |
 | German voice | Browser `speechSynthesis` (de-DE) | free |
 
 One API key covers both AI parts: create it at https://console.groq.com/keys (no card).

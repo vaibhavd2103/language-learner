@@ -1,6 +1,6 @@
 const BASE = "https://api.groq.com/openai/v1";
 
-export const CHAT_MODEL = process.env.GROQ_CHAT_MODEL ?? "llama-3.3-70b-versatile";
+export const CHAT_MODEL = process.env.GROQ_CHAT_MODEL ?? "openai/gpt-oss-120b";
 export const STT_MODEL = process.env.GROQ_STT_MODEL ?? "whisper-large-v3-turbo";
 
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
@@ -32,6 +32,8 @@ export async function chat(
       model: CHAT_MODEL,
       messages,
       temperature: opts.temperature ?? 0.6,
+      // gpt-oss is a reasoning model; keep thinking short so voice replies stay fast
+      ...(CHAT_MODEL.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : {}),
       ...(opts.json ? { response_format: { type: "json_object" } } : {}),
     }),
   });
