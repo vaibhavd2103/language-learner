@@ -8,7 +8,7 @@ Record yourself speaking German, get a German reply (spoken aloud), and ask for 
 |---|---|---|
 | Speech → text | Groq `whisper-large-v3-turbo` | free tier |
 | Conversation + corrections | Groq `openai/gpt-oss-120b` | free tier |
-| German voice | Browser `speechSynthesis` (de-DE) | free |
+| German voice | Microsoft Edge neural voices via `msedge-tts` (browser voice as fallback) | free |
 
 One API key covers both AI parts: create it at https://console.groq.com/keys (no card).
 
