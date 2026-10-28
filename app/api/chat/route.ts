@@ -1,4 +1,5 @@
 import { chat, type ChatMessage } from "@/lib/groq";
+import { hdr } from "@/lib/keys";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,7 @@ Rules:
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const key = hdr(req, "x-groq-key");
 
     if (typeof body.translate === "string") {
       const english = await chat(
@@ -32,7 +34,7 @@ export async function POST(req: Request) {
           { role: "system", content: "Translate the German text into natural English. Output only the translation." },
           { role: "user", content: body.translate },
         ],
-        { temperature: 0 },
+        { temperature: 0, key },
       );
       return Response.json({ text: english });
     }
@@ -43,7 +45,7 @@ export async function POST(req: Request) {
     if (history.length === 0) {
       history.push({ role: "user", content: "Hallo! Lass uns anfangen." });
     }
-    const reply = await chat([{ role: "system", content: systemPrompt(body.level, body.topic ?? "") }, ...history]);
+    const reply = await chat([{ role: "system", content: systemPrompt(body.level, body.topic ?? "") }, ...history], { key });
     return Response.json({ text: reply });
   } catch (e) {
     return Response.json({ error: (e as Error).message }, { status: 500 });

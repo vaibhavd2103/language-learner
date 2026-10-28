@@ -1,4 +1,5 @@
 import { chat } from "@/lib/groq";
+import { hdr } from "@/lib/keys";
 
 export const runtime = "nodejs";
 
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
         { role: "system", content: SYSTEM },
         { role: "user", content: `Learner level: ${level ?? "A2"}\nUtterance: ${text}` },
       ],
-      { json: true, temperature: 0.2 },
+      { json: true, temperature: 0.2, key: hdr(req, "x-groq-key") },
     );
     return Response.json(JSON.parse(raw));
   } catch (e) {
