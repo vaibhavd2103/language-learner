@@ -8,7 +8,7 @@ Record yourself speaking German, get a German reply (spoken aloud), and ask for 
 |---|---|---|
 | Speech → text | Groq `whisper-large-v3-turbo` | free tier |
 | Conversation + corrections | Groq `openai/gpt-oss-120b` | free tier |
-| German voice | Microsoft Edge neural voices via `msedge-tts` (browser voice as fallback) | free |
+| German voice | ElevenLabs free plan (set `ELEVENLABS_API_KEY`), else Google Chirp 3 HD, else free Edge neural voices | free |
 
 One API key covers both AI parts: create it at https://console.groq.com/keys (no card).
 

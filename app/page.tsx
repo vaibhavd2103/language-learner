@@ -48,6 +48,7 @@ export default function Home() {
   const [rate, setRate] = useState(0.9);
   const [voice, setVoice] = useState<string>(VOICES[0][0]);
   const [hideText, setHideText] = useState(true);
+  const [ttsProvider, setTtsProvider] = useState("edge");
   const [recording, setRecording] = useState(false);
   const [status, setStatus] = useState<"idle" | "transcribing" | "thinking">("idle");
   const [error, setError] = useState("");
@@ -78,6 +79,10 @@ export default function Home() {
       localStorage.setItem("prefs", JSON.stringify({ level, autoCorrect, autoSpeak, rate, topic, voice, hideText }));
     } catch {}
   }, [level, autoCorrect, autoSpeak, rate, topic, voice, hideText]);
+
+  useEffect(() => {
+    fetch("/api/tts").then((r) => r.json()).then((d) => setTtsProvider(d.provider)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!("speechSynthesis" in window)) return;
@@ -128,9 +133,11 @@ export default function Home() {
         const audio = new Audio(url);
         audioRef.current = audio;
         await audio.play();
-      } catch {
-        // neural voice unavailable (offline / service down): fall back to the browser voice
-        browserSpeak(text, r);
+      } catch (e) {
+        // Only fall back to the browser voice if it actually has a German voice;
+        // otherwise it reads German with English pronunciation.
+        setError(`Natural voice failed (${(e as Error).message}).${voiceRef.current ? " Using the browser voice instead." : ""}`);
+        if (voiceRef.current) browserSpeak(text, r);
       }
     },
     [rate, voice],
@@ -259,12 +266,12 @@ export default function Home() {
               {LEVELS.map((l) => <option key={l}>{l}</option>)}
             </select>
           </label>
-          <label>
+          {ttsProvider === "edge" && <label>
             Voice
             <select value={voice} onChange={(e) => setVoice(e.target.value)}>
               {VOICES.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
             </select>
-          </label>
+          </label>}
           <label className="grow">
             Topic
             <input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. ordering food, travel, work" />
