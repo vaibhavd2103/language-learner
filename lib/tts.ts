@@ -1,5 +1,3 @@
-import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
-
 import { EDGE_VOICE_OPTIONS as EDGE_VOICES } from "./voices";
 
 export type TtsOptions = {
@@ -29,7 +27,12 @@ async function elevenlabs(text: string, key: string, voiceId: string): Promise<B
   return Buffer.from(await res.arrayBuffer());
 }
 
+const onCloudflare = () => typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
+
 async function edge(text: string, voice?: string): Promise<Buffer> {
+  // Edge's read-aloud service needs a WebSocket with custom headers, which Workers can't open.
+  if (onCloudflare()) throw new Error("The free Edge voice isn't available on Cloudflare");
+  const { MsEdgeTTS, OUTPUT_FORMAT } = await import("msedge-tts");
   const name = EDGE_VOICES.find(([v]) => v === voice)?.[0] ?? EDGE_VOICES[0][0];
   const tts = new MsEdgeTTS();
   await tts.setMetadata(name, OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);

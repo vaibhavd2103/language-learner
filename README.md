@@ -33,3 +33,23 @@ Keys can instead be pasted in the in-app **Settings** (stored only in your brows
 ## Layout
 
 `app/api/{transcribe,chat,correct,tts}` server routes · `components/` MicButton, StatusBar, Transcript, SettingsModal · `hooks/` useAudioRecorder, useSpeech, useSettings · `lib/groq.ts`, `lib/tts.ts` providers.
+
+## Deploy free on Cloudflare (Workers)
+
+Built with [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare). The worker bundle is ~1 MiB gzipped (free-plan limit is 3 MiB).
+
+**Easiest (works from Windows, builds on Cloudflare's Linux servers):**
+
+1. Push this repo to GitHub (merge to `main`).
+2. Cloudflare dashboard → **Workers & Pages → Create → Import a repository**.
+3. Build command `npx opennextjs-cloudflare build`, deploy command `npx wrangler deploy`.
+4. Optional env var `NODE_VERSION=22`.
+5. Under **Settings → Variables and Secrets** add `GROQ_API_KEY` (and optionally `ELEVENLABS_API_KEY`) as *secrets*.
+
+**CLI:** `npm run deploy` (or `npm run preview` to test locally in the Workers runtime). OpenNext's CLI needs Linux/macOS/WSL; on plain Windows use the Git integration above.
+
+**Things to know**
+
+- **The free Edge voice does not work on Cloudflare** (Workers can't open its WebSocket). On Cloudflare the voice is ElevenLabs, then your browser's own German voice as fallback. If you want the free Edge fallback in production, host on Vercel/Node instead; everything else is identical.
+- **Don't put your own keys in server secrets on a public URL**: anyone with the link would spend your Groq/ElevenLabs quota. Either leave the server keys empty and let each visitor paste theirs into ⚙ Settings, or put the site behind **Cloudflare Access** (free for up to 50 users).
+- Free plan limits: 100k requests/day and 10 ms CPU per request. The API routes only proxy to Groq/ElevenLabs, so waiting on those doesn't count against CPU.
