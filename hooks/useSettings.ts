@@ -45,12 +45,14 @@ export function applyTheme(theme: Settings["theme"]) {
 
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [ready, setReady] = useState(false); // true once saved settings were read from localStorage
 
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
       setSettings((s) => ({ ...s, ...saved }));
     } catch {}
+    setReady(true);
   }, []);
 
   useEffect(() => applyTheme(settings.theme), [settings.theme]);
@@ -76,7 +78,7 @@ export function useSettings() {
     });
   }, []);
 
-  return { settings, update, reset };
+  return { settings, update, reset, ready };
 }
 
 /** Headers carrying the user's own keys (if any) to our API routes; server env vars are the fallback. */

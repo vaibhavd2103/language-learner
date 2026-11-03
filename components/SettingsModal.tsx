@@ -46,7 +46,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   );
 }
 
-function Field({ label, hint, htmlFor, children }: { label: string; hint?: string; htmlFor?: string; children: ReactNode }) {
+function Field({ label, hint, htmlFor, children }: { label: string; hint?: ReactNode; htmlFor?: string; children: ReactNode }) {
   return (
     <div>
       <label htmlFor={htmlFor} className="mb-1.5 block text-xs font-medium text-muted">{label}</label>
@@ -331,7 +331,7 @@ export default function SettingsModal({ settings: s, onChange, onReset, onClose 
                     desc="Speech-to-text, tutor replies, corrections & translation."
                     status={groqStatus}
                   >
-                    <Field label="API key" htmlFor={`${uid}-groq`} hint="Free at console.groq.com/keys">
+                    <Field label="API key" htmlFor={`${uid}-groq`} hint={<><a className="text-accent underline underline-offset-2" href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">Get a free key</a> at console.groq.com/keys</>}>
                       <SecretInput id={`${uid}-groq`} value={s.groqKey} onChange={(v) => onChange({ groqKey: v })} placeholder="gsk_…  (blank = use server)" />
                     </Field>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -345,11 +345,15 @@ export default function SettingsModal({ settings: s, onChange, onReset, onClose 
                     desc="Optional natural German voice."
                     status={elStatus}
                   >
-                    <Field label="API key" htmlFor={`${uid}-el`} hint="elevenlabs.io/app/settings/api-keys">
+                    <Field label="API key" htmlFor={`${uid}-el`} hint={<><a className="text-accent underline underline-offset-2" href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener noreferrer">Create a key</a> at elevenlabs.io/app/settings/api-keys</>}>
                       <SecretInput id={`${uid}-el`} value={s.elevenKey} onChange={(v) => onChange({ elevenKey: v })} placeholder="blank = use server" />
                     </Field>
                     <ReadOnly label="Voice model" value={cfg?.elevenlabs.model ?? "…"} />
                   </ProviderCard>
+
+                  <a href="/guide#groq" className="neu-btn inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium">
+                    <BookIcon className="text-base" /> Step-by-step setup guide
+                  </a>
 
                   <p className="flex gap-2 text-xs text-muted">
                     <BookIcon className="mt-0.5 flex-none text-base" />

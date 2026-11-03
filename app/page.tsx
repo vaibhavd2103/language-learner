@@ -5,7 +5,8 @@ import MicButton from "@/components/MicButton";
 import SettingsModal from "@/components/SettingsModal";
 import StatusBar from "@/components/StatusBar";
 import ThemeToggle from "@/components/ThemeToggle";
-import { AlertIcon, ChevronIcon, CloseIcon, MicIcon, SendIcon, SettingsIcon, SparkIcon } from "@/components/Icons";
+import Link from "next/link";
+import { AlertIcon, BookIcon, ChevronIcon, CloseIcon, MicIcon, SendIcon, SettingsIcon, SparkIcon } from "@/components/Icons";
 import Transcript from "@/components/Transcript";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { authHeaders, useSettings } from "@/hooks/useSettings";
@@ -14,13 +15,23 @@ import { postForm, postJson } from "@/lib/client";
 import type { Correction, Msg, Status } from "@/lib/types";
 
 export default function Home() {
-  const { settings, update, reset } = useSettings();
+  const { settings, update, reset, ready } = useSettings();
+  const [serverHasGroq, setServerHasGroq] = useState<boolean | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [working, setWorking] = useState(false); // transcribing or waiting for the tutor
   const [notice, setNotice] = useState("");
   const [draft, setDraft] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [showTranscript, setShowTranscript] = useState(true);
+
+  // Does the server already hold a Groq key? (decides whether to show first-run setup help)
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((c) => setServerHasGroq(Boolean(c?.groq?.keyOnServer)))
+      .catch(() => setServerHasGroq(null));
+  }, []);
+  const needsSetup = ready && serverHasGroq === false && !settings.groqKey.trim();
 
   const closeSettings = useCallback(() => setShowSettings(false), []);
   const idRef = useRef(0);
@@ -153,6 +164,9 @@ export default function Home() {
           <span className="neu-inset rounded-full px-3 py-1.5 text-xs font-semibold text-accent" title="Your level">
             {settings.level}
           </span>
+          <Link href="/guide" aria-label="Help and setup guide" title="Setup guide" className="neu-btn flex h-11 w-11 items-center justify-center rounded-full text-xl">
+            <BookIcon />
+          </Link>
           <ThemeToggle theme={settings.theme} onChange={(theme) => update({ theme })} />
           <button
             onClick={() => setShowSettings(true)}
@@ -175,6 +189,24 @@ export default function Home() {
         </button>
         {showTranscript && (
           <>
+            {messages.length === 0 && needsSetup && (
+              <div className="neu-raised mx-auto mb-4 max-w-xl rounded-3xl p-5 sm:p-6" role="region" aria-label="First-time setup">
+                <h2 className="text-lg font-semibold">Welcome! Two quick steps to start</h2>
+                <ol className="mt-3 space-y-2 text-sm text-muted">
+                  <li><b className="text-fg">1.</b> Get a free Groq API key (no credit card) at{" "}
+                    <a className="font-medium text-accent underline underline-offset-4" href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com/keys</a>.</li>
+                  <li><b className="text-fg">2.</b> Open <b className="text-fg">Settings → API &amp; models</b> and paste it in.</li>
+                </ol>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button onClick={() => setShowSettings(true)} className="neu-accent inline-flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold">
+                    <SettingsIcon className="text-lg" /> Open settings
+                  </button>
+                  <Link href="/guide" className="neu-btn inline-flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-medium">
+                    <BookIcon className="text-lg" /> Full setup guide
+                  </Link>
+                </div>
+              </div>
+            )}
             {messages.length === 0 && (
               <div className="mx-auto my-8 max-w-sm text-center sm:my-14">
                 <span className="neu-raised mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full text-4xl text-accent">
@@ -182,7 +214,8 @@ export default function Home() {
                 </span>
                 <p className="text-base font-medium">Press the microphone (or Space), speak German, press again to send.</p>
                 <p className="mt-2 text-sm text-muted">
-                  The tutor only corrects you when you tap <b className="text-fg">Correct me</b>.
+                  The tutor only corrects you when you tap <b className="text-fg">Correct me</b>.{" "}
+                  <Link href="/guide" className="font-medium text-accent underline underline-offset-4">How it works</Link>
                 </p>
                 <button
                   onClick={() => sendUserText("Hallo! Lass uns anfangen.")}
