@@ -1,8 +1,11 @@
 export type Correction = {
   isCorrect: boolean;
   corrected: string;
+  atYourLevel: string;
+  natural: string;
   explanation: string;
   mistakes: { original: string; fix: string; why: string }[];
+  phrases: { german: string; english: string; note: string }[];
 };
 
 export type Msg = {

@@ -171,6 +171,7 @@ export default function Home() {
             )}
             <Transcript
               messages={messages}
+              level={settings.level}
               hideText={settings.hideText}
               onSpeak={(t, sp) => void speak(t, sp)}
               onReveal={(id) => patch(id, { revealed: true })}
