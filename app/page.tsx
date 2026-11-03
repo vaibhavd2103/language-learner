@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import MicButton from "@/components/MicButton";
 import SettingsModal from "@/components/SettingsModal";
 import StatusBar from "@/components/StatusBar";
+import ThemeToggle from "@/components/ThemeToggle";
+import { AlertIcon, ChevronIcon, CloseIcon, MicIcon, SendIcon, SettingsIcon, SparkIcon } from "@/components/Icons";
 import Transcript from "@/components/Transcript";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { authHeaders, useSettings } from "@/hooks/useSettings";
@@ -12,7 +14,7 @@ import { postForm, postJson } from "@/lib/client";
 import type { Correction, Msg, Status } from "@/lib/types";
 
 export default function Home() {
-  const { settings, update } = useSettings();
+  const { settings, update, reset } = useSettings();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [working, setWorking] = useState(false); // transcribing or waiting for the tutor
   const [notice, setNotice] = useState("");
@@ -20,6 +22,7 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [showTranscript, setShowTranscript] = useState(true);
 
+  const closeSettings = useCallback(() => setShowSettings(false), []);
   const idRef = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
   const messagesRef = useRef<Msg[]>([]);
@@ -135,37 +138,58 @@ export default function Home() {
   const status: Status = recording ? "listening" : working ? "thinking" : speaking ? "speaking" : "idle";
 
   return (
-    <main className="mx-auto flex h-dvh max-w-3xl flex-col px-4">
-      <header className="flex items-center justify-between border-b border-slate-800 py-3">
-        <h1 className="text-xl font-bold">
-          DeutschStream <span className="ml-2 hidden text-xs font-normal text-slate-400 sm:inline">German speaking &amp; listening practice</span>
-        </h1>
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-slate-800 px-2.5 py-1 text-xs text-slate-300">{settings.level}</span>
-          <button onClick={() => setShowSettings(true)} className="rounded-full bg-slate-800 px-3 py-1.5 text-sm hover:bg-slate-700" aria-label="Settings">
-            ⚙ Settings
+    <main className="mx-auto flex h-dvh w-full max-w-3xl flex-col px-4 sm:px-6 lg:max-w-4xl">
+      <header className="flex items-center justify-between gap-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="neu-raised-sm flex h-11 w-11 flex-none items-center justify-center rounded-2xl text-xl font-bold text-accent" aria-hidden>
+            D
+          </span>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-bold leading-tight">DeutschStream</h1>
+            <p className="hidden truncate text-xs text-muted sm:block">German speaking &amp; listening practice</p>
+          </div>
+        </div>
+        <div className="flex flex-none items-center gap-2.5">
+          <span className="neu-inset rounded-full px-3 py-1.5 text-xs font-semibold text-accent" title="Your level">
+            {settings.level}
+          </span>
+          <ThemeToggle theme={settings.theme} onChange={(theme) => update({ theme })} />
+          <button
+            onClick={() => setShowSettings(true)}
+            className="neu-btn flex h-11 items-center gap-2 rounded-full px-3.5 text-sm font-medium"
+            aria-label="Settings"
+          >
+            <SettingsIcon className="text-xl" /> <span className="hidden sm:inline">Settings</span>
           </button>
         </div>
       </header>
 
-      <section className="min-h-0 flex-1 overflow-y-auto py-4">
-        <button onClick={() => setShowTranscript((v) => !v)} className="mb-3 text-xs text-slate-400 hover:text-slate-200">
-          {showTranscript ? "▾ Hide conversation" : "▸ Show conversation"} ({messages.length})
+      <section className="neu-inset min-h-0 flex-1 overflow-y-auto rounded-3xl px-3 py-4 sm:px-5" aria-label="Conversation">
+        <button
+          onClick={() => setShowTranscript((v) => !v)}
+          aria-expanded={showTranscript}
+          className="mb-3 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium text-muted hover:text-fg"
+        >
+          <ChevronIcon className={`text-base transition-transform ${showTranscript ? "" : "-rotate-90"}`} />
+          {showTranscript ? "Hide conversation" : "Show conversation"} ({messages.length})
         </button>
         {showTranscript && (
           <>
             {messages.length === 0 && (
-              <div className="mx-auto mt-10 max-w-sm text-center text-slate-400">
-                <p>Press the microphone (or Space), speak German, press again to send.</p>
-                <p className="mt-2 text-sm">
-                  The tutor only corrects you when you click <b>Correct me</b>.
+              <div className="mx-auto my-8 max-w-sm text-center sm:my-14">
+                <span className="neu-raised mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full text-4xl text-accent">
+                  <MicIcon />
+                </span>
+                <p className="text-base font-medium">Press the microphone (or Space), speak German, press again to send.</p>
+                <p className="mt-2 text-sm text-muted">
+                  The tutor only corrects you when you tap <b className="text-fg">Correct me</b>.
                 </p>
                 <button
                   onClick={() => sendUserText("Hallo! Lass uns anfangen.")}
                   disabled={working}
-                  className="mt-4 rounded-full bg-amber-400 px-5 py-2 text-sm font-medium text-slate-900 hover:bg-amber-300 disabled:opacity-50"
+                  className="neu-accent mt-6 inline-flex min-h-11 items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold"
                 >
-                  Let the tutor start
+                  <SparkIcon className="text-lg" /> Let the tutor start
                 </button>
               </div>
             )}
@@ -184,17 +208,24 @@ export default function Home() {
       </section>
 
       {notice && (
-        <div role="alert" onClick={() => setNotice("")} className="mb-2 cursor-pointer rounded-lg bg-rose-950 px-3 py-2 text-sm text-rose-100">
-          {notice} <span className="text-rose-300/60">(click to dismiss)</span>
+        <div
+          role="alert"
+          className="neu-raised-sm mt-3 flex items-start gap-3 rounded-2xl px-4 py-3 text-sm text-danger"
+        >
+          <AlertIcon className="mt-0.5 flex-none text-lg" />
+          <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{notice}</span>
+          <button onClick={() => setNotice("")} aria-label="Dismiss message" className="-m-1.5 flex h-8 w-8 flex-none items-center justify-center rounded-full hover:bg-line">
+            <CloseIcon />
+          </button>
         </div>
       )}
 
-      <footer className="border-t border-slate-800 pb-4">
+      <footer className="pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <StatusBar status={status} level={level} />
         <div className="flex items-center gap-3">
           <MicButton recording={recording} disabled={working} onClick={toggleMic} />
           <form
-            className="flex flex-1 gap-2"
+            className="flex min-w-0 flex-1 gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               const t = draft;
@@ -202,21 +233,29 @@ export default function Home() {
               void sendUserText(t);
             }}
           >
+            <label htmlFor="draft" className="sr-only">Type your German message</label>
             <input
+              id="draft"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               disabled={recording || working}
-              placeholder={recording ? "Recording… press ■ to send" : "…or type German here"}
-              className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+              enterKeyHint="send"
+              autoComplete="off"
+              placeholder={recording ? "Recording… press stop to send" : "…or type German here"}
+              className="neu-inset h-12 min-w-0 flex-1 rounded-full px-5 text-base placeholder:text-muted/80 disabled:opacity-60 sm:h-14"
             />
-            <button disabled={!draft.trim() || working} className="rounded-lg border border-slate-700 bg-slate-900 px-4 text-sm hover:bg-slate-800 disabled:opacity-50">
-              Send
+            <button
+              disabled={!draft.trim() || working}
+              aria-label="Send message"
+              className="neu-btn flex h-12 w-12 flex-none items-center justify-center rounded-full text-xl text-accent sm:h-14 sm:w-14"
+            >
+              <SendIcon />
             </button>
           </form>
         </div>
       </footer>
 
-      {showSettings && <SettingsModal settings={settings} onChange={update} onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsModal settings={settings} onChange={update} onReset={reset} onClose={closeSettings} />}
     </main>
   );
 }

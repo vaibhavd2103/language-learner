@@ -16,6 +16,7 @@ export type Settings = {
   groqKey: string;
   elevenKey: string;
   elevenVoice: string;
+  theme: "system" | "light" | "dark";
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -30,9 +31,17 @@ export const DEFAULT_SETTINGS: Settings = {
   groqKey: "",
   elevenKey: "",
   elevenVoice: "",
+  theme: "system",
 };
 
-const STORAGE_KEY = "deutschstream.settings";
+export const STORAGE_KEY = "deutschstream.settings";
+
+/** Applies the theme choice to <html>; "system" removes the override so the media query decides. */
+export function applyTheme(theme: Settings["theme"]) {
+  const root = document.documentElement;
+  if (theme === "system") root.removeAttribute("data-theme");
+  else root.setAttribute("data-theme", theme);
+}
 
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -44,6 +53,8 @@ export function useSettings() {
     } catch {}
   }, []);
 
+  useEffect(() => applyTheme(settings.theme), [settings.theme]);
+
   const update = useCallback((patch: Partial<Settings>) => {
     setSettings((s) => {
       const next = { ...s, ...patch };
@@ -54,7 +65,18 @@ export function useSettings() {
     });
   }, []);
 
-  return { settings, update };
+  const reset = useCallback(() => {
+    // Keep the user's API keys; reset only the preferences.
+    setSettings((s) => {
+      const next = { ...DEFAULT_SETTINGS, groqKey: s.groqKey, elevenKey: s.elevenKey };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  return { settings, update, reset };
 }
 
 /** Headers carrying the user's own keys (if any) to our API routes; server env vars are the fallback. */
